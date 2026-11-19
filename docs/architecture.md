@@ -13,12 +13,12 @@ Browser (Vite/React)
    v
 FastAPI (uvicorn)  ───►  SQLite (file)
    |
-   |  Anthropic API (only the backend has the key)
+   |  Ollama HTTP API (backend only)
    v
-Claude (Haiku by default)
+Qwen3 4B (local model by default)
 ```
 
-The browser never holds the Anthropic API key. Every model call goes through the backend.
+Every model call goes through the backend. No paid API key is required. A remote deployment needs an Ollama host reachable from its backend.
 
 ## Data model
 
@@ -68,9 +68,9 @@ I picked separate columns for `rationale` and `arguments` instead of stuffing th
 
 3. **The runner** loads the email IDs that are `pending` or `error`, spawns an `asyncio.gather` over them with a `Semaphore` set to `AGENT_CONCURRENCY`. Each worker:
    - Opens its own short-lived SQLite session.
-   - Renders the email into a user-turn message (system prompt is cached separately via Anthropic prompt caching).
-   - Sends the message to Claude with `tool_choice={"type": "any"}`. This is the trick that guarantees at least one tool call per email, satisfying the spec.
-   - Reads `tool_use` blocks from the response and inserts one `ToolCall` row per block, splitting the `rationale` field off the arguments before persisting.
+   - Renders the email into a user-turn message.
+   - Sends the message and tool catalog to Ollama with thinking disabled. Validates tool names, arguments, and rationales, retrying invalid output once.
+   - Reads validated `message.tool_calls` entries and inserts one `ToolCall` row per function call, splitting the `rationale` field off the arguments before persisting.
    - Bumps the upload's `agent_progress` counter.
 
 4. **GET /api/uploads/{id}/status** is what the upload page polls every 1.5 seconds while the run is in flight.
@@ -85,7 +85,7 @@ I picked separate columns for `rationale` and `arguments` instead of stuffing th
 
 I went with `asyncio` + a bounded semaphore inside the FastAPI process. Rationale:
 
-- For 150 emails at Anthropic's rate limits, a single Python process is plenty.
+- The default concurrency is 1, keeping local inference requests bounded.
 - A Celery or RQ queue would mean another moving piece (Redis, a worker container) and another thing for a reviewer to spin up.
 - Per-email failures don't poison the whole run because each worker catches its own exceptions.
 
@@ -140,13 +140,13 @@ It's restrained on purpose. The visual identity should come from typography, dep
 - **Oversized upload**: 413.
 - **Re-uploads**: each upload is a new row. The frontend's active upload is whatever was most recently created.
 - **Per-email agent failure**: caught, stored on the row, shown in the inbox as an `error` tag in the row, and on the detail panel as a banner.
-- **Model returns no tool calls** (rare with `tool_choice: any`): treated as an error so the user sees it instead of an empty list.
-- **Rate limited (429)**: retried once with a 5-second sleep.
+- **Missing or invalid tool calls**: retried once, then recorded as an email error with no partial tool rows.
+- **Model unavailable or request times out**: recorded per email; progress continues for the rest of the upload.
 - **Cold backend on Render**: the upload page polls; once the API wakes up everything resumes.
 
 ## Security and secrets
 
-- API keys come from `os.environ` on the backend only. Pydantic Settings validates them at startup.
+- Ollama is accessed only by the backend. Keep the model server private; no API key is required for local use.
 - `.env` is in `.gitignore`. `.env.example` is committed.
 - CORS is an allow-list driven by env var.
 - No raw user input is interpolated into SQL (SQLAlchemy parameters everywhere).
@@ -158,4 +158,4 @@ It's restrained on purpose. The visual identity should come from typography, dep
 - Persist tool execution results, with a "re-run" button if you want fresh output. Right now I just compute deterministically each click.
 - Add a dashboard route with per-day, per-tool charts.
 - Make the agent re-runnable per email, not just per upload.
-- Add a real test suite. The CSV parser and mock executor are the two highest-value targets.
+- Extend the agent regression tests to the CSV parser and mock executor.

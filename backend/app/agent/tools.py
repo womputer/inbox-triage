@@ -1,6 +1,6 @@
 """Tool catalog for the agent.
 
-Each tool follows Anthropic's tool-use input schema. Every tool requires a
+Each tool defines a provider-independent JSON Schema for its arguments. Every tool requires a
 `rationale` field, so the model is forced to explain its choice. The rationale
 is stripped from arguments before mock execution.
 """

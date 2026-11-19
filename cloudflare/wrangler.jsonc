@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "inbox-triage-live",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-19",
+  "workers_dev": true,
+  "ai": { "binding": "AI" },
+  "vars": {
+    "LIVE_ENABLED": "false",
+    "ALLOWED_ORIGINS": "https://inbox-triage-womputer.vercel.app"
+  },
+  "d1_databases": [{"binding":"DB","database_name":"inbox-triage-limits","database_id":"9802d417-fb8f-4960-a6a1-88fa78684b72","migrations_dir":"migrations"}],
+  "observability": {"enabled": false}
+}

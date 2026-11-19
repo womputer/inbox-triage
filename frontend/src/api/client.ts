@@ -1,3 +1,4 @@
+import { demoApi } from "../demo/api";
 import type {
   AgentRunResponse,
   EmailDetail,
@@ -44,7 +45,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return (await res.json()) as T;
 }
 
-export const api = {
+const backendApi = {
   uploadCsv(file: File): Promise<UploadCreateResponse> {
     const form = new FormData();
     form.append("file", file);
@@ -103,3 +104,5 @@ export const api = {
 };
 
 export { ApiError };
+
+export const api = import.meta.env.VITE_LOCAL_BACKEND === "true" ? backendApi : demoApi;

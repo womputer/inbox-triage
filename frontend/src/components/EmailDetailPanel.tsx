@@ -74,7 +74,7 @@ export function EmailDetailPanel({ emailId, onClose }: EmailDetailPanelProps) {
                   <Skeleton className="h-32 w-full" />
                 </div>
               ) : error ? (
-                <div className="text-bad text-sm">Failed to load the email.</div>
+                <div className="text-bad text-sm">{error instanceof Error ? error.message : "Failed to load the email."}</div>
               ) : data ? (
                 <div className="grid lg:grid-cols-[1fr_440px] gap-8">
                   <div>
@@ -105,6 +105,7 @@ export function EmailDetailPanel({ emailId, onClose }: EmailDetailPanelProps) {
                   </div>
 
                   <div className="lg:border-l lg:border-line lg:pl-8">
+                    {import.meta.env.VITE_LOCAL_BACKEND !== "true" && <p className="text-sm text-ink-400 mb-4">{data.upload_id === "sample" ? "Precomputed sample · Fictional email · Gemma via Ollama" : "Live result · Gemma on Cloudflare"}. All actions are simulated.</p>}
                     <div className="text-[10px] uppercase tracking-[0.25em] text-ink-600 mb-4">
                       Suggested tools
                       <span className="text-ink-400 ml-2">

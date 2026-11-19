@@ -4,15 +4,15 @@ Short notes on the meaningful choices I made along the way, and what I'd say if 
 
 ## FastAPI over Express or .NET
 
-FastAPI lets me write the agent runner with `async def` and the Anthropic async client without ceremony. It also auto-generates a `/docs` page that doubles as the API contract the spec asks for. Pydantic v2 gives me request and response validation with one decorator. Node would have worked but I'd have written more glue. .NET is too heavy for a one-week build.
+FastAPI lets me write the agent runner with `async def` and an async HTTP client for Ollama without ceremony. It also auto-generates a `/docs` page that doubles as the API contract the spec asks for. Pydantic v2 gives me request and response validation with one decorator. Node would have worked but I'd have written more glue. .NET is too heavy for a one-week build.
 
-## Claude Haiku 4.5 as the default model
+## A small local model via Ollama
 
-Haiku is fast and cheap and the tool-selection task is well within what it does well. The agent isn't being asked to write a novel, it's being asked to pick a tool and fill in fields. Sonnet is one env var change if you want richer rationales. I tested both during development.
+Qwen3 4B supports tool calling and can run locally without an inference API key. It is the initial default, configurable through `OLLAMA_MODEL`. This is a constrained selection task with six tools, but accuracy and latency still need evaluation on representative emails. A hosted demo needs its own reachable inference server.
 
-## tool_choice = any
+## Validate tool calls before persistence
 
-Anthropic supports forcing the model to call some tool. The spec requires at least one tool call per email, so this is the cleanest way to guarantee it. The alternative is checking for empty responses and retrying, which is messier and has no upside here.
+The runner asks for one or more native tool calls, then validates names, argument types, required fields, enums, and a nonempty rationale. It retries invalid output once, then records an email error. It never silently substitutes a hardcoded classification. The catalog stays provider-independent; the runner converts it to Ollama's function format.
 
 ## A separate `rationale` column
 
@@ -24,11 +24,11 @@ The repo is cloneable with zero extra setup. The DB lives at `backend/tigtagtoe.
 
 ## asyncio Semaphore, no queue
 
-The simplest thing that fits. 150 emails at 5 concurrent goes through in a minute or so. No Redis, no worker container. If scale required it I'd swap in RQ but at this size it would be over-engineering.
+The simplest thing that fits. The default processes one email at a time to fit local inference capacity. No Redis, no worker container. If scale required it I'd swap in RQ but at this size it would be over-engineering.
 
 ## Polling, not SSE
 
-A 1.5-second poll on `/api/uploads/{id}/status` is plenty for showing progress. SSE would mean another endpoint, another connection lifecycle, and an extra failure mode for the reviewer to hit. The agent finishes faster than most people read the page.
+A 1.5-second poll on `/api/uploads/{id}/status` is plenty for showing progress. SSE would mean another endpoint, another connection lifecycle, and an extra failure mode for the reviewer to hit. Inference time depends on the model host.
 
 ## Vite + React Router + React Query + Zustand
 
@@ -56,4 +56,4 @@ Tool executions are mocked because the spec is explicit. They're deterministic f
 
 ## What I left out
 
-Tests (beyond smoke checks), SSE, multi-user, a real queue, a settings page, charts. All called out in the README under "What I deliberately didn't build" with the reasoning attached.
+Broad tests outside the agent integration, SSE, multi-user, a real queue, a settings page, charts. All called out in the README under "What I deliberately didn't build" with the reasoning attached.

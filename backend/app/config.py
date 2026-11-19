@@ -26,11 +26,9 @@ class Settings(BaseSettings):
         env_ignore_empty=True,
     )
 
-    anthropic_api_key: str = Field(default="", description="Anthropic API key.")
-    anthropic_model: str = Field(
-        default="claude-haiku-4-5-20251001",
-        description="Model used by the agent. Haiku is plenty for tool selection.",
-    )
+    ollama_base_url: str = Field(default="http://localhost:11434")
+    ollama_model: str = Field(default="qwen3:4b")
+    ollama_timeout_seconds: float = Field(default=120, gt=0)
 
     database_url: str = Field(
         default="sqlite:///./tigtagtoe.db",
@@ -43,7 +41,7 @@ class Settings(BaseSettings):
     )
 
     max_emails_per_run: int = Field(default=300)
-    agent_concurrency: int = Field(default=5)
+    agent_concurrency: int = Field(default=1, ge=1)
     max_body_chars: int = Field(default=4000)
 
     @property

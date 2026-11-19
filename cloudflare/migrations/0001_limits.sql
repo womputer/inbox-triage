@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS quotas (
+  key TEXT PRIMARY KEY,
+  used INTEGER NOT NULL,
+  day TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS quotas_day ON quotas(day);

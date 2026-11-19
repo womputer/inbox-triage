@@ -43,17 +43,17 @@ export function Layout({ children }: LayoutProps) {
           className="group flex items-center gap-3 mb-10 text-left"
         >
           <div className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center logo-mark text-2xl text-accent leading-none">
-            T
+            I
           </div>
           <div>
-            <div className="text-ink-50 font-medium tracking-tight">TigTagToe</div>
+            <div className="text-ink-50 font-medium tracking-tight">Inbox Triage</div>
             <div className="text-ink-600 text-xs">email triage agent</div>
           </div>
         </button>
 
         <nav className="flex flex-col gap-1">
           <NavItem to="/" label="Home" exact />
-          <NavItem to="/upload" label="Upload" />
+          <NavItem to="/upload" label={import.meta.env.VITE_LOCAL_BACKEND === "true" ? "Upload" : "Try live"} />
           <NavItem to="/inbox" label="Inbox" />
         </nav>
 
@@ -113,7 +113,13 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </aside>
 
-      <main className="relative z-10 flex-1 min-w-0">{children}</main>
+      <main className="relative z-10 flex-1 min-w-0">
+        {import.meta.env.VITE_LOCAL_BACKEND !== "true" && <div className="px-6 lg:px-12 py-3 border-b border-line text-sm text-ink-200 flex flex-wrap gap-x-6 gap-y-2">
+          <span>Portfolio demo · Precomputed samples · Simulated actions</span>
+          <NavLink to="/inbox" className="text-accent hover:underline">Sample inbox</NavLink>
+          <NavLink to="/upload" className="text-accent hover:underline">Try live triage</NavLink>
+        </div>}
+        {children}</main>
     </div>
   );
 }

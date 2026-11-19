@@ -1,0 +1,194 @@
+{
+  "provenance": {
+    "model": "gemma4:12b-mlx",
+    "runtime": "Ollama",
+    "generated_at": "2026-11-19",
+    "source": "Synthetic fictional emails; model-generated suggestions, precomputed once."
+  },
+  "emails": [
+    {
+      "id": "sample-1",
+      "upload_id": "sample",
+      "source_id": "sample-1",
+      "sender": "Maya Chen <maya@example.com>",
+      "recipients": "jordan@example.com",
+      "cc": "",
+      "subject": "Design review on Thursday",
+      "sent_at": "2026-11-19T14:00:00Z",
+      "body": "Can we meet Thursday, November 26 at 10am Eastern for a 30-minute review of the new onboarding screens? Please invite alex@example.com.",
+      "agent_status": "done",
+      "agent_error": null,
+      "tool_calls": [
+        {
+          "id": "sample-1-tool-0",
+          "tool_name": "schedule_meeting",
+          "arguments": {
+            "attendees": [
+              "maya@example.com",
+              "alex@example.com"
+            ],
+            "duration_minutes": 30,
+            "proposed_time": "2026-11-26T10:00:00-05:00",
+            "subject": "Design review: onboarding screens"
+          },
+          "rationale": "The sender proposes a specific time for a meeting: \"Can we meet Thursday, November 26 at 10am Eastern\".",
+          "order_idx": 0
+        }
+      ]
+    },
+    {
+      "id": "sample-2",
+      "upload_id": "sample",
+      "source_id": "sample-2",
+      "sender": "Leo Martinez <leo@example.com>",
+      "recipients": "jordan@example.com",
+      "cc": "",
+      "subject": "Question about the launch checklist",
+      "sent_at": "2026-11-19T14:00:00Z",
+      "body": "Could you confirm whether the release checklist includes an accessibility review? I need your answer before I finalize the plan.",
+      "agent_status": "done",
+      "agent_error": null,
+      "tool_calls": [
+        {
+          "id": "sample-2-tool-0",
+          "tool_name": "draft_response",
+          "arguments": {
+            "body": "Hi Leo,\n\nYes, the release checklist includes an accessibility review. Let me know if you need any more details before finalizing the plan.",
+            "subject": "Re: Question about the launch checklist",
+            "to": "leo@example.com",
+            "tone": "professional"
+          },
+          "rationale": "The email asks a direct question about the checklist: \"Could you confirm whether the release checklist includes an accessibility review?\"",
+          "order_idx": 0
+        }
+      ]
+    },
+    {
+      "id": "sample-3",
+      "upload_id": "sample",
+      "source_id": "sample-3",
+      "sender": "Priya Shah <priya@example.com>",
+      "recipients": "jordan@example.com",
+      "cc": "",
+      "subject": "Unresolved billing issue",
+      "sent_at": "2026-11-19T14:00:00Z",
+      "body": "We have been billed twice for the third month in a row. Please escalate this to your manager. If it is not resolved this week we will cancel our contract.",
+      "agent_status": "done",
+      "agent_error": null,
+      "tool_calls": [
+        {
+          "id": "sample-3-tool-0",
+          "tool_name": "escalate_to_manager",
+          "arguments": {
+            "original_email_id": "sample-3",
+            "priority": "high",
+            "reason": "Client threat to cancel contract due to repeated billing errors."
+          },
+          "rationale": "The client is threatening to cancel their contract due to a recurring billing error: \"If it is not resolved this week we will cancel our contract.\"",
+          "order_idx": 0
+        },
+        {
+          "id": "sample-3-tool-1",
+          "tool_name": "draft_response",
+          "arguments": {
+            "body": "Hi Priya,\n\nI am very sorry for the frustration this has caused. I have escalated this issue to my manager immediately to ensure it is investigated and resolved by the end of this week. I will follow up with you as soon as I have an update.",
+            "subject": "Re: Unresolved billing issue",
+            "to": "priya@example.com",
+            "tone": "professional"
+          },
+          "rationale": "The email requires a response to acknowledge the issue and the escalation.",
+          "order_idx": 1
+        },
+        {
+          "id": "sample-3-tool-2",
+          "tool_name": "create_task",
+          "arguments": {
+            "assignee": "jordan@example.com",
+            "due_date": "2026-11-26",
+            "notes": "Ensure the double billing issue is resolved by the end of the week to prevent contract cancellation.",
+            "title": "Resolve billing issue for Priya Shah"
+          },
+          "rationale": "The email specifies a deadline for resolution: \"If it is not resolved this week we will cancel our contract.\"",
+          "order_idx": 2
+        }
+      ]
+    },
+    {
+      "id": "sample-4",
+      "upload_id": "sample",
+      "source_id": "sample-4",
+      "sender": "Alex Rivera <alex@example.com>",
+      "recipients": "jordan@example.com",
+      "cc": "",
+      "subject": "Prepare the project update",
+      "sent_at": "2026-11-19T14:00:00Z",
+      "body": "Please prepare a one-page project status update by Friday, November 27. Assign it to jordan@example.com and include milestones, blockers, and next steps.",
+      "agent_status": "done",
+      "agent_error": null,
+      "tool_calls": [
+        {
+          "id": "sample-4-tool-0",
+          "tool_name": "create_task",
+          "arguments": {
+            "assignee": "jordan@example.com",
+            "due_date": "2026-11-27",
+            "notes": "Include milestones, blockers, and next steps.",
+            "title": "Prepare one-page project status update"
+          },
+          "rationale": "The email explicitly requests a deliverable: \"Please prepare a one-page project status update by Friday, November 27.\"",
+          "order_idx": 0
+        }
+      ]
+    },
+    {
+      "id": "sample-5",
+      "upload_id": "sample",
+      "source_id": "sample-5",
+      "sender": "IT notices <it@example.com>",
+      "recipients": "jordan@example.com",
+      "cc": "",
+      "subject": "Urgent: service certificate expires tonight",
+      "sent_at": "2026-11-19T14:00:00Z",
+      "body": "Our production service certificate expires at midnight tonight. This is a time-sensitive notice: please flag it as urgent so it stays at the top of the inbox until the deadline. The renewal team is already handling the work; no reply or new task is needed.",
+      "agent_status": "done",
+      "agent_error": null,
+      "tool_calls": [
+        {
+          "id": "sample-5-tool-0",
+          "tool_name": "flag_urgent",
+          "arguments": {
+            "deadline": "midnight tonight",
+            "reason": "Production service certificate expiration deadline."
+          },
+          "rationale": "The email states, \"Our production service certificate expires at midnight tonight,\" and explicitly asks to flag it as urgent.",
+          "order_idx": 0
+        }
+      ]
+    },
+    {
+      "id": "sample-6",
+      "upload_id": "sample",
+      "source_id": "sample-6",
+      "sender": "Office news <news@example.com>",
+      "recipients": "jordan@example.com",
+      "cc": "",
+      "subject": "This week around the office",
+      "sent_at": "2026-11-19T14:00:00Z",
+      "body": "FYI: the new lounge opened on Monday. Photos from the team lunch are in the shared folder. No action or response is needed.",
+      "agent_status": "done",
+      "agent_error": null,
+      "tool_calls": [
+        {
+          "id": "sample-6-tool-0",
+          "tool_name": "archive_no_action",
+          "arguments": {
+            "category": "fyi",
+            "reason": "This is an informational update about the new lounge and team lunch photos."
+          },
+          "rationale": "The email explicitly states \"No action or response is needed\" and provides general office news.",
+          "order_idx": 0
+        }
+      ]
+    }
+  ]
+}

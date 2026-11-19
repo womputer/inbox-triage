@@ -1,6 +1,6 @@
 """Agent run loop.
 
-Processes a set of emails through Claude, persists each tool call with its
+Processes a set of emails through Ollama, persists each tool call with its
 rationale, and updates the upload's progress along the way.
 
 Concurrency comes from running several emails in parallel via asyncio +
@@ -15,31 +15,84 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-import anthropic
-from anthropic import AsyncAnthropic
+import httpx
+from jsonschema import Draft202012Validator, ValidationError
 
 from app.agent.prompts import SYSTEM_PROMPT, render_email_user_message
-from app.agent.tools import TOOLS, split_rationale
+from app.agent.tools import TOOLS, get_tool_definition, split_rationale
 from app.config import get_settings
 from app.db import session_scope
 from app.models import Email, ToolCall, Upload
 
 logger = logging.getLogger(__name__)
 
-# Module-level singletons. Created lazily so importing doesn't require the key.
-_client: AsyncAnthropic | None = None
+
+def _validate_calls(response: dict[str, Any]) -> list[dict[str, Any]]:
+    """Validate the entire response before writing any calls to the database."""
+    calls = response.get("message", {}).get("tool_calls")
+    if not isinstance(calls, list) or not calls:
+        raise ValueError("Model returned no tool calls.")
+    validated = []
+    for call in calls:
+        function = call.get("function", {})
+        definition = get_tool_definition(function.get("name"))
+        if definition is None:
+            raise ValueError("Model returned an unknown tool.")
+        arguments = function.get("arguments")
+        Draft202012Validator(definition["input_schema"]).validate(arguments)
+        if not arguments["rationale"].strip():
+            raise ValueError("Model returned an empty rationale.")
+        validated.append(function)
+    return validated
 
 
-def _get_client() -> AsyncAnthropic:
-    global _client
-    if _client is None:
-        settings = get_settings()
-        if not settings.anthropic_api_key:
-            raise RuntimeError(
-                "ANTHROPIC_API_KEY is not set. Add it to your .env file."
+async def _select_tools(user_message: str) -> list[dict[str, Any]]:
+    settings = get_settings()
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_message},
+    ]
+    tools = [
+        {"type": "function", "function": {
+            "name": tool["name"],
+            "description": tool["description"],
+            "parameters": tool["input_schema"],
+        }}
+        for tool in TOOLS
+    ]
+    # Keep the client scoped to this worker's event loop, including BackgroundTasks.
+    async with httpx.AsyncClient(timeout=settings.ollama_timeout_seconds) as client:
+        for attempt in range(2):
+            response = await client.post(
+                f"{settings.ollama_base_url.rstrip('/')}/api/chat",
+                json={
+                    "model": settings.ollama_model,
+                    "messages": messages,
+                    "tools": tools,
+                    "stream": False,
+                    "think": False,
+                    "options": {"temperature": 0, "num_ctx": 8192, "num_predict": 2048},
+                },
             )
-        _client = AsyncAnthropic(api_key=settings.anthropic_api_key)
-    return _client
+            if response.status_code == 404:
+                raise RuntimeError(
+                    f"Ollama model or endpoint not found. Check OLLAMA_BASE_URL "
+                    f"and run `ollama pull {settings.ollama_model}` on the model host."
+                )
+            response.raise_for_status()
+            try:
+                return _validate_calls(response.json())
+            except (ValueError, TypeError, AttributeError, KeyError, ValidationError):
+                if attempt:
+                    raise
+                # Native tool calling is not guaranteed. Retry once, without
+                # persisting partial results or inventing a fallback classification.
+                messages.append({"role": "user", "content": (
+                    "Return at least one tool call from the provided catalog. "
+                    "Use the exact argument types and all required fields, "
+                    "including a nonempty one-sentence rationale."
+                )})
+    raise RuntimeError("Model returned no valid tool calls.")
 
 
 def _now() -> datetime:
@@ -57,7 +110,6 @@ async def _process_one_email(
     and recorded on the email row so the run can continue.
     """
     settings = get_settings()
-    client = _get_client()
 
     async with semaphore:
         # Load the email fresh inside the worker so each task owns its session.
@@ -80,24 +132,7 @@ async def _process_one_email(
         )
 
         try:
-            response = await client.messages.create(
-                model=settings.anthropic_model,
-                max_tokens=1024,
-                system=[
-                    {
-                        "type": "text",
-                        "text": SYSTEM_PROMPT,
-                        "cache_control": {"type": "ephemeral"},
-                    }
-                ],
-                tools=TOOLS,
-                tool_choice={"type": "any"},
-                messages=[{"role": "user", "content": user_message}],
-            )
-        except anthropic.RateLimitError as exc:
-            logger.warning("Rate limited on %s, backing off: %s", email_id, exc)
-            await asyncio.sleep(5)
-            return await _process_one_email(email_id, semaphore=semaphore)
+            tool_calls = await _select_tools(user_message)
         except Exception as exc:  # noqa: BLE001, we want to capture every failure mode
             logger.exception("Agent error on email %s", email_id)
             with session_scope() as db:
@@ -107,29 +142,16 @@ async def _process_one_email(
                     em.agent_error = f"{type(exc).__name__}: {exc}"[:1000]
             return False
 
-        # Pull tool_use blocks out of the response.
-        tool_blocks = [b for b in response.content if b.type == "tool_use"]
-
-        if not tool_blocks:
-            # The model declined to call a tool even with tool_choice=any.
-            # Treat as an error so it shows up in the UI.
-            with session_scope() as db:
-                em = db.get(Email, email_id)
-                if em is not None:
-                    em.agent_status = "error"
-                    em.agent_error = "Model returned no tool calls."
-            return False
-
         with session_scope() as db:
             em = db.get(Email, email_id)
             if em is None:
                 return False
-            for idx, block in enumerate(tool_blocks):
-                args, rationale = split_rationale(block.input or {})
+            for idx, function in enumerate(tool_calls):
+                args, rationale = split_rationale(function["arguments"])
                 db.add(
                     ToolCall(
                         email_id=em.id,
-                        tool_name=block.name,
+                        tool_name=function["name"],
                         arguments=args,
                         rationale=rationale,
                         order_idx=idx,

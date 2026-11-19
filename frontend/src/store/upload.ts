@@ -12,6 +12,7 @@ interface UploadState {
 const STORAGE_KEY = "tigtagtoe.activeUploadId";
 
 function readInitial(): string | null {
+  if (import.meta.env.VITE_LOCAL_BACKEND !== "true") return "sample";
   if (typeof window === "undefined") return null;
   try {
     return window.localStorage.getItem(STORAGE_KEY);

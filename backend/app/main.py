@@ -28,8 +28,8 @@ async def lifespan(app: FastAPI):
     init_db()
     settings = get_settings()
     logger.info(
-        "TigTagToe API ready. Model=%s, concurrency=%s, db=%s",
-        settings.anthropic_model,
+        "Inbox Triage API ready. Model=%s, concurrency=%s, db=%s",
+        settings.ollama_model,
         settings.agent_concurrency,
         settings.database_url,
     )
@@ -39,9 +39,9 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
-        title="TigTagToe API",
+        title="Inbox Triage API",
         version="0.1.0",
-        description="Backend for the TigTagToe email triage assistant.",
+        description="Backend for the Inbox Triage email triage assistant.",
         lifespan=lifespan,
     )
 
@@ -66,7 +66,7 @@ def create_app() -> FastAPI:
     def root() -> JSONResponse:
         return JSONResponse(
             {
-                "name": "TigTagToe API",
+                "name": "Inbox Triage API",
                 "docs": "/docs",
                 "health": "/healthz",
             }

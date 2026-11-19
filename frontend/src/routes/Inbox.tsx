@@ -91,7 +91,7 @@ export function Inbox() {
 
         <div className="flex gap-2">
           <Link to="/upload">
-            <Button variant="secondary">Upload new CSV</Button>
+            <Button variant="secondary">{import.meta.env.VITE_LOCAL_BACKEND === "true" ? "Upload new CSV" : "Try your own email"}</Button>
           </Link>
         </div>
       </motion.div>

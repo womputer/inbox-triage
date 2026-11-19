@@ -20,16 +20,16 @@ export function Home() {
           <span className="text-accent italic">Almost.</span>
         </h1>
         <p className="text-ink-400 text-lg md:text-xl max-w-2xl leading-relaxed">
-          TigTagToe sends each email in your inbox through an agent that picks the
+          Inbox Triage sends each email in your inbox through an agent that picks the
           right tool to handle it. Meetings get scheduled, replies get drafted,
           complaints get escalated, newsletters get archived. You stay focused on
           the ten percent that needs your judgment.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center gap-4">
-          <Link to="/upload">
+          <Link to={import.meta.env.VITE_LOCAL_BACKEND === "true" ? "/upload" : "/inbox"}>
             <Button size="lg" rightIcon={<Arrow />}>
-              Upload a CSV
+              {import.meta.env.VITE_LOCAL_BACKEND === "true" ? "Upload a CSV" : "Explore the sample inbox"}
             </Button>
           </Link>
           <Link to="/inbox">
