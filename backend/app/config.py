@@ -36,8 +36,8 @@ class Settings(BaseSettings):
     )
 
     cors_origins: str = Field(
-        default="http://localhost:5173",
-        description="Comma-separated list of allowed origins.",
+        default="http://localhost:5173,https://inbox-triage-womputer.vercel.app",
+        description="Comma-separated list of allowed origins (local Vite + production Vercel).",
     )
 
     max_emails_per_run: int = Field(default=300)
